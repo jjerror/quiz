@@ -60,7 +60,7 @@ public class QuizEndFragment extends Fragment {
         if (bundle != null) {
             this.mResult = bundle.getInt(ARG_RESULT);
             this.mTotal = bundle.getInt(ARG_TOTAL);
-            this.mTimeout = bundle.getBoolean(ARG_RESULT);
+            this.mTimeout = bundle.getBoolean(ARG_TIMEOUT);
         }
     }
 
