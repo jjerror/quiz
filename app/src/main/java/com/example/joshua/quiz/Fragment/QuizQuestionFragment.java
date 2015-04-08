@@ -5,21 +5,20 @@ import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AbsListView;
-import android.widget.AdapterView;
 import android.widget.Button;
-import android.widget.GridView;
+import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.example.joshua.quiz.Adapter.AnswerAdapter;
 import com.example.joshua.quiz.AndroidBus;
 import com.example.joshua.quiz.R;
 import com.example.joshua.quiz.event.QuestionAnswerEvent;
+import com.squareup.picasso.Picasso;
 
 import java.util.List;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
+import butterknife.InjectViews;
 import butterknife.OnClick;
 
 /**
@@ -35,12 +34,13 @@ public class QuizQuestionFragment extends Fragment {
     private String mTitle;
     private String mCurrentAnswer;
     private String[] mAnswers;
-    AnswerAdapter mAnswerAdapter;
 
     @InjectView(R.id.question_number) TextView questionNumberView;
     @InjectView(R.id.title) TextView titleTextView;
-    @InjectView(R.id.answers) GridView answerView;
     @InjectView(R.id.submit) Button submitButton;
+    @InjectViews({R.id.image1, R.id.image2, R.id.image3, R.id.image4}) List<ImageView> answersViews;
+    @InjectViews({R.id.background1, R.id.background2, R.id.background3, R.id.background4})
+    List<View> backgroundViews;
 
     /**
      * Factory method to create a new instance of * this fragment to display the question
@@ -94,24 +94,26 @@ public class QuizQuestionFragment extends Fragment {
         titleTextView.setText(mTitle);
         submitButton.setEnabled(false);
 
-        // setup the grid view
-        mAnswerAdapter = new AnswerAdapter(getActivity(), mAnswers);
-
-        // TODO find a better layout for the 4 items. The layout doesn't good atm.
-        answerView.setAdapter(mAnswerAdapter);
-        answerView.setChoiceMode(AbsListView.CHOICE_MODE_SINGLE);
-        answerView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                submitButton.setEnabled(true);
-                mCurrentAnswer = mAnswers[position];
-                view.setSelected(true);
-            }
-        });
+        for (int i = 0; i < mAnswers.length; i++) {
+            String answer = mAnswers[i];
+            Picasso.with(getActivity()).load(answer).into(answersViews.get(i));
+        }
     }
 
     @OnClick(R.id.submit)
     void submit() {
         AndroidBus.getInstance().post(new QuestionAnswerEvent(mQuestionNumber, mCurrentAnswer));
     }
+
+    @OnClick({R.id.background1, R.id.background2, R.id.background3, R.id.background4})
+    public void pickAnswer(View pickedView) {
+        for (int i = 0; i < backgroundViews.size(); i++) {
+            View view = backgroundViews.get(i);
+            view.setSelected(view.equals(pickedView));
+            mCurrentAnswer = mAnswers[i];
+        }
+        submitButton.setEnabled(true);
+    }
+
+
 }
