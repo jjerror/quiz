@@ -6,7 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -15,7 +15,7 @@ import java.util.Map;
  */
 public class Quiz {
 
-    private final List<Question> mQuestions;
+    private final Map<String, Question> mQuestions;
 
     /**
      * Factory method to load the questions from an input stream
@@ -26,13 +26,13 @@ public class Quiz {
     public static Quiz loadQuiz(InputStream inputStream) {
         try {
             ObjectMapper mapper = new ObjectMapper();
-            List<Question> questions = new ArrayList<>();
+            Map<String, Question> questions = new LinkedHashMap<>();
             Map<String, List<String>> input = mapper.readValue(inputStream, new TypeReference<Map<String, List<String>>>() {
             });
             for (String title : input.keySet()) {
                 List<String> images = input.get(title);
                 if (images != null) {
-                    questions.add(new Question(title, images));
+                    questions.put(title, new Question(title, images));
                 }
             }
             return new Quiz(questions);
@@ -43,7 +43,7 @@ public class Quiz {
         return null;
     }
 
-    private Quiz(List<Question> questions) {
+    private Quiz(Map<String, Question> questions) {
         this.mQuestions = questions;
     }
 
@@ -54,9 +54,18 @@ public class Quiz {
      * @return QuizEntry Object
      */
     public QuizEntry createNewQuizEntry(int numberOfQuestion) {
-        List<Question> copy = Util.copyAndShuffle(mQuestions);
+        List<Question> copy = Util.copyAndShuffle(mQuestions.values());
         numberOfQuestion = Math.min(numberOfQuestion, copy.size());
         return new QuizEntry(copy.subList(0, numberOfQuestion));
     }
 
+    /**
+     * Get the question object by title
+     *
+     * @param title title to get
+     * @return null if not found
+     */
+    public Question getQuestion(String title) {
+        return mQuestions.get(title);
+    }
 }

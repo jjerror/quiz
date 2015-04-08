@@ -6,6 +6,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.widget.Toolbar;
+import android.text.TextUtils;
 import android.widget.TextView;
 
 import com.example.joshua.quiz.Fragment.QuizEndFragment;
@@ -20,6 +21,7 @@ import com.example.joshua.quiz.model.Quiz;
 import com.example.joshua.quiz.model.QuizEntry;
 import com.squareup.otto.Subscribe;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -52,26 +54,46 @@ public class MainActivity extends ActionBarActivity {
         ButterKnife.inject(this);
         setSupportActionBar(toolbar);
 
-        startLanding();
+        if (savedInstanceState != null) {
+            String quizEntry = savedInstanceState.getString("QUIZ");
+            if (!TextUtils.isEmpty(quizEntry)) {
+                try {
+                    mCurrentQuiz = new QuizEntry(mQuiz, quizEntry);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        if (mCurrentQuiz != null) {
+            startNextQuestion();
+        } else {
+            startLanding();
+        }
     }
 
     @Override
     protected void onResume() {
         super.onResume();
         AndroidBus.getInstance().register(this);
+        if (mCurrentQuiz != null) {
+            startTimer();
+        }
     }
 
     @Override
     protected void onPause() {
         super.onPause();
         AndroidBus.getInstance().unregister(this);
+        stopTimer();
     }
 
     @Subscribe
     public void startQuiz(StartQuizEvent event) {
         mCurrentQuiz = mQuiz.createNewQuizEntry(NUMBER_OF_QUESTIONS);
+        mCurrentQuiz.startQuiz();
         startTimer();
-        startQuestion();
+        startNextQuestion();
     }
 
     @Subscribe
@@ -82,19 +104,18 @@ public class MainActivity extends ActionBarActivity {
     @Subscribe
     public void answerQuestion(QuestionAnswerEvent event) {
         mCurrentQuiz.answer(event.selectedAnswer);
-        if (mCurrentQuiz.nextQuestion() != null) {
-            startQuestion();
-        } else {
-            endQuiz();
-        }
+        startNextQuestion();
     }
 
     @Subscribe
     public void updateTimer(UpdateTimerEvent event) {
-        if (mCurrentQuiz.isExpired(TIMEOUT_SECONDS)) {
-            endQuiz();
+        long elapsedTime = 0;
+        if (mCurrentQuiz != null) {
+            if (mCurrentQuiz.isExpired(TIMEOUT_SECONDS)) {
+                endQuiz();
+            }
+            elapsedTime = mCurrentQuiz.getElapsedTime();
         }
-        long elapsedTime = mCurrentQuiz.getElapsedTime();
         timerView.setText(formatTimerString(elapsedTime));
     }
 
@@ -110,13 +131,18 @@ public class MainActivity extends ActionBarActivity {
         loadFragment(QuizStartFragment.newInstance(), QuizStartFragment.TAG);
     }
 
-    private void startQuestion() {
+    private void startNextQuestion() {
+        if (mCurrentQuiz.nextQuestion() == null) {
+            endQuiz();
+            return;
+        }
         Question question = mCurrentQuiz.nextQuestion();
         QuizQuestionFragment fragment = QuizQuestionFragment.newInstance(mCurrentQuiz.questionNumber(), question.getTitle(), question.getRandomAnswers());
         loadFragment(fragment, QuizQuestionFragment.TAG);
     }
 
     private void endQuiz() {
+        mCurrentQuiz.endQuiz();
         stopTimer();
         int result = mCurrentQuiz.getResult();
         boolean timeout = mCurrentQuiz.isExpired(TIMEOUT_SECONDS);
@@ -126,7 +152,6 @@ public class MainActivity extends ActionBarActivity {
     }
 
     private void startTimer() {
-        mCurrentQuiz.startQuiz();
         mTimer = new Timer();
         mTimer.scheduleAtFixedRate(new TimerTask() {
             public void run() {
@@ -136,8 +161,9 @@ public class MainActivity extends ActionBarActivity {
     }
 
     private void stopTimer() {
-        mCurrentQuiz.endQuiz();
-        mTimer.cancel();
+        if (mTimer != null) {
+            mTimer.cancel();
+        }
     }
 
     private void loadFragment(Fragment fragment, String tag) {
@@ -148,7 +174,9 @@ public class MainActivity extends ActionBarActivity {
     @Override
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-
-
+        if (mCurrentQuiz != null) {
+            outState.putString("QUIZ", mCurrentQuiz.toJson());
+        }
     }
+
 }

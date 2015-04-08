@@ -1,6 +1,7 @@
 package com.example.joshua.quiz;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -17,7 +18,7 @@ public class Util {
      * @param input the original list
      * @return the copied list in randomized order
      */
-    public static <T> List<T> copyAndShuffle(List<T> input) {
+    public static <T> List<T> copyAndShuffle(Collection<T> input) {
         List<T> copy = new ArrayList<>(input);
         Collections.shuffle(copy);
         return copy;

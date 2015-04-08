@@ -1,16 +1,24 @@
 package com.example.joshua.quiz.model;
 
 import com.example.joshua.quiz.Util;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * QuizEntry Object, model each quiz entry
  */
 public class QuizEntry {
 
-    private final List<String> mAnswers = new ArrayList<>();
+    private final List<String> mAnswers;
     private final List<Question> mQuestions;
 
     private long mStartedTime;
@@ -22,7 +30,37 @@ public class QuizEntry {
      * @param questions questions for this quiz
      */
     public QuizEntry(List<Question> questions) {
-        this.mQuestions = questions;
+        mQuestions = questions;
+        mAnswers = new ArrayList<>(questions.size());
+    }
+
+    /**
+     * Constructor from a saved json string
+     *
+     * @param quiz the quiz
+     * @param json json to load
+     * @throws IOException
+     */
+    public QuizEntry(Quiz quiz, String json) throws IOException {
+        ObjectMapper mapper = new ObjectMapper();
+        InputStream inputStream = new ByteArrayInputStream(json.getBytes());
+        Map input = mapper.readValue(inputStream, Map.class);
+
+        //noinspection unchecked
+        List<String> questions = (List<String>) input.get("questions");
+        mQuestions = new ArrayList<>(questions.size());
+        for (String title : questions) {
+            mQuestions.add(quiz.getQuestion(title));
+        }
+        //noinspection unchecked
+        mAnswers = (List<String>) input.get("answers");
+        mStartedTime = (Long) input.get("start");
+        if (input.get("end") instanceof Long) {
+            mEndedTime = (Long) input.get("end");
+        }
+        if (input.get("end") instanceof Integer) {
+            mEndedTime = (Integer) input.get("end");
+        }
     }
 
     /**
@@ -79,15 +117,19 @@ public class QuizEntry {
      * Start doing the quiz, log the start time
      */
     public void startQuiz() {
-        mStartedTime = System.currentTimeMillis();
-        mEndedTime = 0;
+        if (mStartedTime == 0) {
+            mStartedTime = System.currentTimeMillis();
+            mEndedTime = 0L;
+        }
     }
 
     /**
      * End doing the quiz, log the end time
      */
     public void endQuiz() {
-        mEndedTime = System.currentTimeMillis();
+        if (mEndedTime == 0L) {
+            mEndedTime = System.currentTimeMillis();
+        }
     }
 
     /**
@@ -104,8 +146,36 @@ public class QuizEntry {
      * @return the time since the start of the quiz in seconds
      */
     public long getElapsedTime() {
-        long elapsedTime = Math.max(System.currentTimeMillis(), mEndedTime) - mStartedTime;
+        long endTime = mEndedTime == 0 ? System.currentTimeMillis() : mEndedTime;
+        long elapsedTime = endTime - mStartedTime;
         return elapsedTime / Util.MILLISECOND_TO_SECOND;
     }
+
+    /**
+     * Serial to json string
+     *
+     * @return the json string
+     */
+    public String toJson() {
+        Map<String, Object> serialize = new LinkedHashMap<>();
+        List<String> questions = new ArrayList<>(mQuestions.size());
+        for (Question question : mQuestions) {
+            questions.add(question.getTitle());
+        }
+        serialize.put("questions", questions);
+        serialize.put("answers", mAnswers);
+        serialize.put("start", mStartedTime);
+        serialize.put("end", mEndedTime);
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            OutputStream outputStream = new ByteArrayOutputStream();
+            mapper.writeValue(outputStream, serialize);
+            return outputStream.toString();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
 
 }
