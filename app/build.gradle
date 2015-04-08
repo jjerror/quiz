@@ -1,0 +1,95 @@
+apply plugin: 'com.android.application'
+
+android {
+    compileSdkVersion 21
+    buildToolsVersion "21.1.2"
+
+    defaultConfig {
+        applicationId "com.example.joshua.quiz"
+        minSdkVersion 15
+        targetSdkVersion 21
+        versionCode 1
+        versionName "1.0"
+    }
+    signingConfigs {
+        release {
+            try {
+                storeFile file("quiz.keystore")
+                storePassword KEYSTORE_PASSWORD
+                keyAlias "client"
+                keyPassword KEY_PASSWORD
+            }
+            catch (ex) {
+                throw new InvalidUserDataException("You should define KEYSTORE_PASSWORD and " +
+                        "KEY_PASSWORD in gradle.properties."
+                )
+            }
+        }
+    }
+    buildTypes {
+        debug {
+            minifyEnabled true
+        }
+        release {
+            signingConfig signingConfigs.release
+            // disable proguard for now
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+    lintOptions {
+        disable 'InvalidPackage'
+    }
+    packagingOptions {
+        exclude 'META-INF/services/javax.annotation.processing.Processor'
+        exclude 'META-INF/LICENSE'
+        exclude 'META-INF/NOTICE'
+    }
+}
+
+dependencies {
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+    compile 'com.android.support:appcompat-v7:21.0.+'
+    compile 'com.android.support:cardview-v7:21.0.+'
+    compile 'com.android.support:recyclerview-v7:21.0.+'
+    compile 'com.google.android.gms:play-services:6.5.87'
+    compile 'com.squareup.retrofit:retrofit:1.6.1'
+    compile 'com.squareup.okhttp:okhttp-urlconnection:2.3.0'
+    compile 'com.squareup.okhttp:okhttp:2.3.0'
+    compile 'com.squareup:otto:1.3.6'
+    compile 'com.jakewharton:butterknife:6.0.0'
+    compile 'com.fasterxml.jackson.core:jackson-databind:2.4.+'
+    compile 'com.fasterxml.jackson.core:jackson-core:2.4.+'
+    compile 'com.fasterxml.jackson.core:jackson-annotations:2.4.+'
+    compile 'com.squareup.picasso:picasso:2.5.2'
+}
+
+// Get location of adb
+Properties localProperties = new Properties()
+try {
+    localProperties.load(project.rootProject.file('local.properties').newDataInputStream())
+}
+catch (ex) {
+    throw new InvalidUserDataException("You should define the path to your Android SDK as a " +
+            "property `sdk.dir` in local.properties on the project root."
+    )
+}
+def adb = localProperties.getProperty('sdk.dir') + '/platform-tools/adb'
+
+task runDebug(dependsOn: 'installDebug') {
+    description 'Runs the debug-flavour of the app on the connected device'
+    doLast {
+        exec {
+            commandLine "$adb", "shell", "am", "start", "-n", "com.example.joshua.quiz/.MainActivity"
+        }
+    }
+}
+
+task runRelease(dependsOn: 'installRelease') {
+    description 'Runs the release-flavour of the app on the connected device'
+    doLast {
+        exec {
+            commandLine "$adb", "shell", "am", "start", "-n", "com.example.joshua.quiz/.MainActivity"
+        }
+    }
+}

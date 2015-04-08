@@ -1,0 +1,48 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              xmlns:tools="http://schemas.android.com/tools"
+              android:layout_width="match_parent"
+              android:layout_height="wrap_content"
+              tools:context="com.example.joshua.quiz.Fragment.QuizQuestionFragment">
+
+    <TextView
+        android:id="@+id/question_number"
+        style="@style/Base.TextAppearance.AppCompat.Body1"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="@dimen/default_padding"
+        android:maxLines="1"
+        tools:text="@string/hello_blank_fragment"/>
+
+    <TextView
+        android:id="@+id/title"
+        style="@style/Base.TextAppearance.AppCompat.Medium"
+        android:layout_below="@id/question_number"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="@dimen/default_padding"
+        android:minLines="2"
+        tools:text="@string/hello_blank_fragment"/>
+
+    <Button
+        android:id="@+id/submit"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_alignParentBottom="true"
+        android:elevation="@dimen/button_elevation"
+        android:text="@string/next"/>
+
+    <GridView
+        android:id="@+id/answers"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_above="@id/submit"
+        android:layout_below="@id/title"
+        android:verticalSpacing="@dimen/gridview_spacing"
+        android:horizontalSpacing="@dimen/gridview_spacing"
+        android:numColumns="2"
+        android:paddingRight="20dp"
+        android:paddingLeft="20dp"
+        android:scrollbars="none" />
+
+</RelativeLayout>

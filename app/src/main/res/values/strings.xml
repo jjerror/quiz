@@ -1,0 +1,15 @@
+<resources>
+    <string name="app_name">Quiz</string>
+
+    <string name="hello_world">Hello world!</string>
+    <string name="action_settings">Settings</string>
+
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="Start">Start Now</string>
+    <string name="quiz_description">You have 2 minutes to finish the quiz.</string>
+    <string name="result_text">You got %1$d/%2$d questions right.</string>
+    <string name="timeout_result_text">Sorry! Time is up!\n\nYou got %1$d/%2$d questions right.</string>
+    <string name="restart">Restart</string>
+    <string name="question">Question %1$d:</string>
+    <string name="next">Next</string>
+</resources>
