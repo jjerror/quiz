@@ -110,7 +110,9 @@ public class QuizQuestionFragment extends Fragment {
         for (int i = 0; i < backgroundViews.size(); i++) {
             View view = backgroundViews.get(i);
             view.setSelected(view.equals(pickedView));
-            mCurrentAnswer = mAnswers[i];
+            if (view.equals(pickedView)) {
+                mCurrentAnswer = mAnswers[i];
+            }
         }
         submitButton.setEnabled(true);
     }
